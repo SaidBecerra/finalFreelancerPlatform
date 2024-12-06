@@ -1,0 +1,15 @@
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore metadata files
+*.project
+*.classpath
+
+# Ignore environment configuration files
+.env
