@@ -1,0 +1,20 @@
+General Goal of the Project
+
+The Freelancer Platform is a Java application that linksclients with freelancers to work on some projects. 
+It allows clients to post projects and freelancers to work on them for a price, so the projects get completed by 
+a freelancer and the client gets their project done.
+
+Key Features:
+    •    User Roles: Distinct profiles for clients and freelancers.
+    •    Project Management: Clients can post jobs and freelancers can apply for them and work on them until completion.
+    •    Payments: System that will allow (only in theory) for the freelancer to get paid when they complete the project.
+    •    Rating System: Clients can rate freelancers after they complete their project.
+
+Languages used:
+    •    Programming Language: Java
+    •    Database: SQLite
+    •    Possibly: HTML, CSS and JS
+
+The goal of this project is to allow random people that just want to get something done for a business or a side gig or anything really,
+to be able to post their project and make it easier for freelancers to see it and they get it done instead. This in theory would 
+let the freelancer make some side extra money and it makes it easier for the client to actually get their projects done.
