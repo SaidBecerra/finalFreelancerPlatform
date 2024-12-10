@@ -10,12 +10,12 @@ public class DatabaseManager {
     // Singleton instance
     private static volatile DatabaseManager instance;
 
-    // Private constructor to restrict instantiation
+    // Private constructor
     private DatabaseManager() {
         createAllTables();
     }
 
-    // Public method to get the Singleton instance
+    // Public method to get use the singleton pattern
     public static DatabaseManager getInstance() {
         if (instance == null) {
             synchronized (DatabaseManager.class) {
@@ -163,7 +163,7 @@ public class DatabaseManager {
             pstmt.setString(1, project.getProjectName());
             pstmt.setInt(2, project.getClient().getAccountID());
 
-            // Handle nullable freelancerID
+            // Handle null freelancerID
             if (project.getFreelancer() == null) {
                 pstmt.setNull(3, java.sql.Types.INTEGER);
             } else {
@@ -193,7 +193,7 @@ public class DatabaseManager {
             pstmt.setString(1, project.getProjectName());
             pstmt.setInt(2, project.getClient().getAccountID());
 
-            // Handle nullable freelancerID
+            // Handle null freelancerID
             if (project.getFreelancer() == null) {
                 pstmt.setNull(3, java.sql.Types.INTEGER);
             } else {
@@ -228,7 +228,6 @@ public class DatabaseManager {
     }
 
     // Fetch all projects for a specific account
-// Example in getAllProjectsForAccount method
     public ArrayList<Projects> getAllProjectsForAccount(int accountID) {
         ArrayList<Projects> projectsList = new ArrayList<>();
         String query = "SELECT * FROM Projects WHERE clientID = ? OR freelancerID = ?;";
@@ -412,7 +411,6 @@ public class DatabaseManager {
                 String projectName = rs.getString("projectName");
                 int clientID = rs.getInt("clientID");
 
-                // More robust handling of freelancerID
                 int freelancerID = 0;
                 Object freelancerObj = rs.getObject("freelancerID");
                 if (freelancerObj != null) {

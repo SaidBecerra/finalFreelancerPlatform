@@ -6,7 +6,7 @@ public class Projects {
     private final String projectName;
     private final int projectID;
     private final Client client;
-    private Freelancer freelancer; // Made this mutable to allow assigning later
+    private Freelancer freelancer;
     private final String projectDescription;
     private final long budget;
     private final Date deadline;
@@ -22,10 +22,8 @@ public class Projects {
         this.isFinished = false;
         this.projectID = projectID;
 
-        // Add project to the Client's need-to-do list
         client.getNeedToDo().add(this);
 
-        // Add to Freelancer's working list only if a Freelancer is provided
         if (freelancer != null) {
             freelancer.getWorkingOn().add(this);
         }
@@ -77,7 +75,6 @@ public class Projects {
         if (!isFinished) {
             isFinished = true;
 
-            // Update Freelancer and Client lists if necessary
             if (freelancer != null) {
                 freelancer.finishProject(this);
             }

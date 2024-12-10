@@ -25,7 +25,7 @@ public class FreelancerPlatformSystem {
         System.out.println("2. Create Account");
         System.out.print("Please enter your choice: ");
         int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine();
 
         switch (choice) {
             case 1 -> login(scanner);
@@ -55,7 +55,7 @@ public class FreelancerPlatformSystem {
         System.out.println("2. Client");
         System.out.print("Please enter your choice: ");
         int accountType = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine();
 
         System.out.print("Enter the ID: ");
         int id = scanner.nextInt();
@@ -65,7 +65,6 @@ public class FreelancerPlatformSystem {
         System.out.print("Enter your email: ");
         String email = scanner.nextLine();
 
-        // Email validation before account creation
         if (isEmailValid(email)) {
             System.out.println("Invalid email format.");
             return;
@@ -106,7 +105,7 @@ public class FreelancerPlatformSystem {
             System.out.println("0. Logout");
             System.out.print("Please enter your choice: ");
             choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            scanner.nextLine();
 
             switch (choice) {
                 case 1 -> viewAvailableProjects();
@@ -133,7 +132,7 @@ public class FreelancerPlatformSystem {
             System.out.println("0. Logout");
             System.out.print("Please enter your choice: ");
             choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            scanner.nextLine();
 
             switch (choice) {
                 case 1 -> createProject(scanner);
@@ -226,7 +225,7 @@ public class FreelancerPlatformSystem {
 
         System.out.print("Enter the project ID for which you want to leave a review: ");
         int projectID = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine();
 
         Projects project = controller.findProjectById(projectID);
         if (project == null || project.getFreelancer() == null || !project.getFreelancer().equals(freelancer)) {
@@ -243,13 +242,13 @@ public class FreelancerPlatformSystem {
 
         System.out.print("Enter a rating (1-5): ");
         int rating = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine();
         if (rating < 1 || rating > 5) {
             System.out.println("Rating must be between 1 and 5.");
             return;
         }
 
-        int reviewID = generateUniqueReviewID(); // Example ID generation method
+        int reviewID = generateUniqueReviewID();
         Reviews review = new Reviews(reviewID, rating, comment, loggedInAccount.getAccountID());
         controller.addReviewToProject(project, review);
 
@@ -264,7 +263,7 @@ public class FreelancerPlatformSystem {
 
         System.out.print("Enter the project ID for which you want to leave a review: ");
         int projectID = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine();
 
         Projects project = controller.findProjectById(projectID);
         if (project == null || project.getClient() == null || !project.getClient().equals(client) || project.getFreelancer() == null) {
@@ -281,22 +280,21 @@ public class FreelancerPlatformSystem {
 
         System.out.print("Enter a rating for the freelancer (1-5): ");
         int rating = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+        scanner.nextLine();
         if (rating < 1 || rating > 5) {
             System.out.println("Rating must be between 1 and 5.");
             return;
         }
 
-        int reviewID = generateUniqueReviewID(); // Example ID generation method
+        int reviewID = generateUniqueReviewID();
         Reviews review = new Reviews(reviewID, rating, comment, loggedInAccount.getAccountID());
         controller.addReviewToFreelancer(project.getFreelancer(), review);
 
         System.out.println("Review submitted successfully for freelancer: " + project.getFreelancer().getUsername());
     }
 
-    // Example helper method for generating unique review IDs
     private int generateUniqueReviewID() {
-        return (int) (Math.random() * 100000); // Replace with your logic if needed
+        return (int) (Math.random() * 100000);
     }
 
 
