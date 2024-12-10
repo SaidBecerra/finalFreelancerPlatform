@@ -1,5 +1,6 @@
 package org.example;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -12,7 +13,7 @@ public class FreelancerPlatformController {
         // Create freelancer account
         Freelancer freelancer = new Freelancer(id, username, email, password, specialty, experience, bankInfo);
         // Insert freelancer into the database
-        DatabaseManager.getInstance().insertAccount(freelancer, "freelancer");
+        DatabaseManager.getInstance().insertAccount(freelancer, "Freelancer");
         return freelancer;
     }
 
@@ -23,7 +24,7 @@ public class FreelancerPlatformController {
         // Create client account
         Client client = new Client(id, username, email, password, bankInfo);
         // Insert client into the database
-        DatabaseManager.getInstance().insertAccount(client, "client");
+        DatabaseManager.getInstance().insertAccount(client, "Client");
         return client;
     }
 
@@ -43,7 +44,7 @@ public class FreelancerPlatformController {
     // Mark a project as finished
     public void markProjectAsFinished(Projects project) {
         project.markAsFinished();
-        DatabaseManager.getInstance().updateProject(project);
+        DatabaseManager.getInstance().finishProject(project);
     }
 
     // Find project by ID
@@ -77,7 +78,7 @@ public class FreelancerPlatformController {
 
     // View available projects (for freelancers)
     public void viewAvailableProjects() {
-        List<Projects> availableProjects = DatabaseManager.getInstance().selectAvailableProjects();
+        ArrayList<Projects> availableProjects = DatabaseManager.getInstance().selectAvailableProjects();
 
         if (availableProjects.isEmpty()) {
             System.out.println("No available projects.");
@@ -111,6 +112,20 @@ public class FreelancerPlatformController {
 
         DatabaseManager.getInstance().insertReview(review);
         System.out.println("Review added to the freelancer successfully.");
+    }
+
+    public boolean assignProjectToFreelancer(Freelancer freelancer, Projects project) {
+        if (project == null || project.getFreelancer() != null) {
+            System.out.println("Project is already assigned to a freelancer or does not exist.");
+            return false;
+        }
+
+        // Update the project with the freelancer
+        project.assignFreelancer(freelancer);
+        DatabaseManager.getInstance().assignFreelancerToProject(project, freelancer);
+
+        System.out.println("Successfully assigned project: " + project.getProjectName());
+        return true;
     }
 
 

@@ -33,7 +33,6 @@ public class DatabaseManager {
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(url);
-            System.out.println("Connection to SQLite established.");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -68,7 +67,7 @@ public class DatabaseManager {
                 projectID INTEGER PRIMARY KEY,
                 projectName TEXT NOT NULL,
                 clientID INTEGER NOT NULL,
-                freelancerID INTEGER NOT NULL,
+                freelancerID INTEGER,
                 description TEXT NOT NULL,
                 budget REAL NOT NULL,
                 deadline TEXT NOT NULL,
@@ -156,17 +155,25 @@ public class DatabaseManager {
     // Insert a project into the database
     public void insertProject(Projects project) {
         String query = """
-                INSERT INTO Projects(projectName, clientID, freelancerID, description, budget, deadline)
-                VALUES (?, ?, ?, ?, ?, ?);
-                """;
+            INSERT INTO Projects(projectName, clientID, freelancerID, description, budget, deadline, isFinished)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+            """;
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, project.getProjectName());
             pstmt.setInt(2, project.getClient().getAccountID());
-            pstmt.setInt(3, project.getFreelancer().getAccountID());
+
+            // Handle nullable freelancerID
+            if (project.getFreelancer() == null) {
+                pstmt.setNull(3, java.sql.Types.INTEGER);
+            } else {
+                pstmt.setInt(3, project.getFreelancer().getAccountID());
+            }
+
             pstmt.setString(4, project.getProjectDescription());
             pstmt.setDouble(5, project.getBudget());
             pstmt.setString(6, new SimpleDateFormat("yyyy-MM-dd").format(project.getDeadline()));
+            pstmt.setBoolean(7, false); // Set isFinished to false by default
             pstmt.executeUpdate();
             System.out.println("Project inserted successfully.");
         } catch (SQLException e) {
@@ -177,15 +184,22 @@ public class DatabaseManager {
     // Update an existing project
     public void updateProject(Projects project) {
         String query = """
-                UPDATE Projects
-                SET projectName = ?, clientID = ?, freelancerID = ?, description = ?, budget = ?, deadline = ?
-                WHERE projectID = ?;
-                """;
+            UPDATE Projects
+            SET projectName = ?, clientID = ?, freelancerID = ?, description = ?, budget = ?, deadline = ?
+            WHERE projectID = ?;
+            """;
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, project.getProjectName());
             pstmt.setInt(2, project.getClient().getAccountID());
-            pstmt.setInt(3, project.getFreelancer().getAccountID());
+
+            // Handle nullable freelancerID
+            if (project.getFreelancer() == null) {
+                pstmt.setNull(3, java.sql.Types.INTEGER);
+            } else {
+                pstmt.setInt(3, project.getFreelancer().getAccountID());
+            }
+
             pstmt.setString(4, project.getProjectDescription());
             pstmt.setDouble(5, project.getBudget());
             pstmt.setString(6, new SimpleDateFormat("yyyy-MM-dd").format(project.getDeadline()));
@@ -197,7 +211,24 @@ public class DatabaseManager {
         }
     }
 
+    public void finishProject(Projects project) {
+        String query = """
+            UPDATE Projects
+            SET isFinished = 'true'
+            WHERE projectID = ?;
+            """;
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, project.getProjectID());
+            pstmt.executeUpdate();
+            System.out.println("Project finished successfully.");
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
     // Fetch all projects for a specific account
+// Example in getAllProjectsForAccount method
     public ArrayList<Projects> getAllProjectsForAccount(int accountID) {
         ArrayList<Projects> projectsList = new ArrayList<>();
         String query = "SELECT * FROM Projects WHERE clientID = ? OR freelancerID = ?;";
@@ -210,15 +241,15 @@ public class DatabaseManager {
                 int projectID = rs.getInt("projectID");
                 String projectName = rs.getString("projectName");
                 int clientID = rs.getInt("clientID");
-                int freelancerID = rs.getInt("freelancerID");
+                Integer freelancerID = rs.getObject("freelancerID", Integer.class);
                 String description = rs.getString("description");
                 long budget = rs.getLong("budget");
                 Date deadline = new SimpleDateFormat("yyyy-MM-dd").parse(rs.getString("deadline"));
 
                 Client client = (Client) selectAccount(clientID);
-                Freelancer freelancer = (Freelancer) selectAccount(freelancerID);
+                Freelancer freelancer = freelancerID != null ? (Freelancer) selectAccount(freelancerID) : null;
 
-                if (client != null && freelancer != null) {
+                if (client != null) {
                     Projects project = new Projects(projectID, projectName, client, freelancer, description, budget, deadline);
                     projectsList.add(project);
                 }
@@ -328,10 +359,8 @@ public class DatabaseManager {
 
                 Client client = (Client) selectAccount(clientID);
 
-                if (client != null) {
-                    Projects project = new Projects(projectID, projectName, client, freelancer, description, budget, deadline);
-                    projectsList.add(project);
-                }
+                Projects project = new Projects(projectID, projectName, client, freelancer, description, budget, deadline);
+                projectsList.add(project);
             }
         } catch (SQLException | java.text.ParseException e) {
             System.out.println(e.getMessage());
@@ -356,10 +385,15 @@ public class DatabaseManager {
 
                 Freelancer freelancer = (Freelancer) selectAccount(freelancerID);
 
+                Projects project;
+
                 if (freelancer != null) {
-                    Projects project = new Projects(projectID, projectName, client, freelancer, description, budget, deadline);
-                    projectsList.add(project);
+                    project = new Projects(projectID, projectName, client, freelancer, description, budget, deadline);
                 }
+                else{
+                    project = new Projects(projectID, projectName, client, null, description, budget, deadline);
+                }
+                projectsList.add(project);
             }
         } catch (SQLException | java.text.ParseException e) {
             System.out.println(e.getMessage());
@@ -369,7 +403,7 @@ public class DatabaseManager {
 
     public ArrayList<Projects> selectAvailableProjects() {
         ArrayList<Projects> projectsList = new ArrayList<>();
-        String query = "SELECT * FROM Projects WHERE isFinished = false;";
+        String query = "SELECT * FROM Projects WHERE isFinished = 'false' OR isFinished = 0";
         try (Connection conn = connect();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -377,22 +411,44 @@ public class DatabaseManager {
                 int projectID = rs.getInt("projectID");
                 String projectName = rs.getString("projectName");
                 int clientID = rs.getInt("clientID");
-                int freelancerID = rs.getInt("freelancerID");
+
+                // More robust handling of freelancerID
+                int freelancerID = 0;
+                Object freelancerObj = rs.getObject("freelancerID");
+                if (freelancerObj != null) {
+                    if (freelancerObj instanceof Integer) {
+                        freelancerID = (Integer) freelancerObj;
+                    } else {
+                        try {
+                            freelancerID = Integer.parseInt(freelancerObj.toString());
+                        } catch (NumberFormatException ex) {
+                            System.out.println("Could not parse freelancerID: " + freelancerObj);
+                            continue; // Skip this project
+                        }
+                    }
+                }
+
                 String description = rs.getString("description");
                 long budget = rs.getLong("budget");
                 Date deadline = new SimpleDateFormat("yyyy-MM-dd").parse(rs.getString("deadline"));
 
                 Client client = (Client) selectAccount(clientID);
-                Freelancer freelancer = (Freelancer) selectAccount(freelancerID);
+                Freelancer freelancer = freelancerID > 0 ? (Freelancer) selectAccount(freelancerID) : null;
 
-                if (client != null && freelancer != null) {
-                    Projects project = new Projects(projectID, projectName, client, freelancer, description, budget, deadline);
+                Projects project;
+                if (client != null) {
+                    project = new Projects(projectID, projectName, client, freelancer, description, budget, deadline);
                     projectsList.add(project);
+                } else {
+                    System.out.println("Skipping project due to null client: " + projectID);
                 }
             }
         } catch (SQLException | java.text.ParseException e) {
-            System.out.println(e.getMessage());
+            System.out.println("Error in selectAvailableProjects:");
+            e.printStackTrace();
         }
+
+        System.out.println("Number of available projects: " + projectsList.size());
         return projectsList;
     }
 
@@ -413,14 +469,34 @@ public class DatabaseManager {
                 Client client = (Client) selectAccount(clientID);
                 Freelancer freelancer = (Freelancer) selectAccount(freelancerID);
 
-                if (client != null && freelancer != null) {
+                if (freelancer != null) {
                     return new Projects(projectId, projectName, client, freelancer, description, budget, deadline);
+                }
+                else {
+                    return new Projects(projectId, projectName, client, null, description, budget, deadline);
                 }
             }
         } catch (SQLException | java.text.ParseException e) {
             System.out.println(e.getMessage());
         }
         return null;
+    }
+
+    public void assignFreelancerToProject(Projects project, Freelancer freelancer) {
+        String query = """
+        UPDATE Projects
+        SET freelancerID = ?
+        WHERE projectID = ?;
+        """;
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, freelancer.getAccountID());
+            pstmt.setInt(2, project.getProjectID());
+            pstmt.executeUpdate();
+            System.out.println("Freelancer assigned to project successfully.");
+        } catch (SQLException e) {
+            System.out.println("Error assigning freelancer to project: " + e.getMessage());
+        }
     }
 
     // Create all tables

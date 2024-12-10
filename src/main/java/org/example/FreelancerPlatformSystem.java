@@ -100,8 +100,9 @@ public class FreelancerPlatformSystem {
             System.out.println("Freelancer Menu:");
             System.out.println("1. View available projects");
             System.out.println("2. View your projects");
-            System.out.println("3. Mark a project as completed");
-            System.out.println("4. Leave a review");
+            System.out.println("3. Take on a project");
+            System.out.println("4. Mark a project as completed");
+            System.out.println("5. Leave a review");
             System.out.println("0. Logout");
             System.out.print("Please enter your choice: ");
             choice = scanner.nextInt();
@@ -110,8 +111,9 @@ public class FreelancerPlatformSystem {
             switch (choice) {
                 case 1 -> viewAvailableProjects();
                 case 2 -> viewProjects();
-                case 3 -> markProjectAsCompleted(scanner);
-                case 4 -> leaveReview(scanner);
+                case 3 -> takeOnProject(scanner);
+                case 4 -> markProjectAsCompleted(scanner);
+                case 5 -> leaveReview(scanner);
                 case 0 -> {
                     loggedInAccount = null;
                     System.out.println("Logged out.");
@@ -165,7 +167,7 @@ public class FreelancerPlatformSystem {
 
             System.out.print("Enter project budget: ");
             long budget = scanner.nextLong();
-            scanner.nextLine(); // Consume newline
+            scanner.nextLine();
 
             System.out.print("Enter project deadline (yyyy-MM-dd): ");
             String deadlineString = scanner.nextLine();
@@ -173,8 +175,8 @@ public class FreelancerPlatformSystem {
 
             Client client = (Client) loggedInAccount;
             Projects project = controller.createProject(projectID, projectName, client, null, description, budget, deadline);
+
             System.out.println("Project created successfully: " + project.getProjectName());
-            viewer.displayProjectDetails(project);
         } catch (ParseException e) {
             System.out.println("Invalid date format. Please use yyyy-MM-dd.");
         } catch (Exception e) {
@@ -301,5 +303,35 @@ public class FreelancerPlatformSystem {
     // Email validation method
     private boolean isEmailValid(String email) {
         return email == null || !email.matches("^[\\w._%+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    private void takeOnProject(Scanner scanner) {
+        if (!(loggedInAccount instanceof Freelancer freelancer)) {
+            System.out.println("Only freelancers can take on projects.");
+            return;
+        }
+
+        System.out.println("Available Projects:");
+        controller.viewAvailableProjects();
+
+        System.out.print("Enter the project ID you want to take on: ");
+        int projectID = scanner.nextInt();
+        scanner.nextLine();
+
+        Projects project = controller.findProjectById(projectID);
+        if (project == null) {
+            System.out.println("Project not found.");
+            return;
+        }
+
+        if (project.getFreelancer() != null) {
+            System.out.println("Project is already assigned to a freelancer.");
+            return;
+        }
+
+        boolean success = controller.assignProjectToFreelancer(freelancer, project);
+        if (success) {
+            System.out.println("You have successfully taken on the project: " + project.getProjectName());
+        }
     }
 }
